@@ -1,0 +1,36 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  push:
+    branches:
+      - main # Ou 'master', dependendo do nome da sua branch principal
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      ECR_REGISTRY_URL: 597088015325.dkr.ecr.us-east-2.amazonaws.com # Seu URL do ECR
+      ECR_REPOSITORY: meubottelegramphp-minimal # O nome do seu novo repositório ECR
+      AWS_REGION: us-east-2 # Sua região da AWS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY_URL/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY_URL/$ECR_REPOSITORY:latest
